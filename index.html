@@ -260,11 +260,15 @@ body { background: #03060f; }
   }; });
   function send(form, title, rows) {
     var f = form.elements, err = form.querySelector('.tb-err'); err.textContent = '';
-    var phone = (f.phone.value || '').replace(/[\s\-+]/g, '').replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 1632; });
-    if (!f.name.value.trim()) { err.textContent = 'اكتب اسمك'; f.name.focus(); return; }
-    if (!/^(20|0)?1[0-9]{9}$/.test(phone)) { err.textContent = 'اكتب رقم موبايل صحيح'; f.phone.focus(); return; }
+    var phone = f.phone ? (f.phone.value || '').replace(/[\s\-+]/g, '').replace(/[٠-٩]/g, function (d) { return d.charCodeAt(0) - 1632; }) : '';
+    // Some forms (such as order status) only ask for an order number.
+    // Validate and include contact fields only when that form has them.
+    if (f.name && !f.name.value.trim()) { err.textContent = 'اكتب اسمك'; f.name.focus(); return; }
+    if (f.phone && !/^(20|0)?1[0-9]{9}$/.test(phone)) { err.textContent = 'اكتب رقم موبايل صحيح'; f.phone.focus(); return; }
     var req = rows(f); if (req) { err.textContent = req; return; }
-    var lines = [title, 'الاسم: ' + f.name.value.trim(), 'الموبايل: ' + phone];
+    var lines = [title];
+    if (f.name && f.name.value.trim()) lines.push('الاسم: ' + f.name.value.trim());
+    if (f.phone && phone) lines.push('الموبايل: ' + phone);
     rows(f, lines);
     window.open('https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(lines.join('\n')), '_blank');
   }
